@@ -79,17 +79,23 @@ languages/
 
 **Solution:** Use `zed_extension_api`'s `download_file` and `make_file_executable` to fetch a pre-built binary from GitHub Releases on first use and cache it.
 
-**Prerequisite:** The `aptos-language-server` CI pipeline (in `aptos-labs/move-vscode-extension`) must publish platform-specific pre-built binaries to GitHub Releases before this can be implemented. Currently the only distribution path is `cargo install`. Adding release artifact publishing is a required prerequisite for A0.
-
 **Implementation in `lib.rs`:**
 - In `language_server_command()`, first check `worktree.which("aptos-language-server")` (respects user PATH override).
-- If not found, resolve the latest release tag from `aptos-labs/move-vscode-extension` GitHub Releases via the GitHub API.
-- Download the platform-appropriate binary (`aptos-language-server-{os}-{arch}`).
-- Cache in the `zed_extension_api`-provided extension storage directory (do not hardcode a path).
+- If not found, call the GitHub Releases API (`/repos/aptos-labs/move-vscode-extension/releases/latest`) to resolve the latest release tag.
+- Download and decompress the platform-appropriate artifact into the `zed_extension_api`-provided extension storage directory (do not hardcode a path).
 - Make executable and return path.
-- Surface a clear error message if download fails, including a fallback install instruction.
+- Surface a clear error message if download fails, including a fallback `cargo install` instruction.
 
-**Platform matrix:** `linux-x86_64`, `linux-aarch64`, `macos-x86_64`, `macos-aarch64`. Windows support follows Zed's own Windows availability.
+**Artifact naming** (from `aptos-labs/move-vscode-extension` releases):
+
+| Platform | Artifact | Format |
+|---|---|---|
+| macOS aarch64 | `aptos-language-server-aarch64-apple-darwin.gz` | gzip |
+| macOS x86_64 | `aptos-language-server-x86_64-apple-darwin.gz` | gzip |
+| Linux x86_64 | `aptos-language-server-x86_64-unknown-linux-gnu.gz` | gzip |
+| Windows x86_64 | `aptos-language-server-x86_64-pc-windows-msvc.zip` | zip |
+
+Note: `linux-aarch64` is not currently published. If that changes, add support then.
 
 ---
 
