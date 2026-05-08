@@ -171,6 +171,9 @@ impl zed::Extension for AptosMoveExtension {
                 "path": null,
                 "extraArgs": []
             },
+            "completion": {
+                "autoimport": { "enable": true }
+            },
             "aptosCliAvailable": aptos_available
         });
 
