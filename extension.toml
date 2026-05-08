@@ -9,7 +9,7 @@ license = "MIT"
 
 [language_servers.aptos-move-lsp]
 name = "Aptos Move Language Server"
-languages = ["Move"]
+languages = ["Move", "Move.toml"]
 
 [grammars.move_on_aptos]
 repository = "https://github.com/aptos-labs/tree-sitter-move-on-aptos"
