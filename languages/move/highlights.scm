@@ -1,34 +1,36 @@
-; Syntax highlighting for Aptos Move
-; Minimal version using only validated node types
-
 ; Comments
 (line_comment) @comment
 (block_comment) @comment
 
 ; Literals
 (bool_literal) @boolean
-(number) @number
-(byte_string) @string
-(numerical_addr) @constant.builtin
+(num_literal) @number
+(byte_string_literal) @string
+(hex_string_literal) @string
+(numerical_address) @constant.builtin
 
 ; Module declarations
-(module
+(module_declaration
   name: (identifier) @namespace)
 
 ; Function declarations
-(function_decl
+(function_declaration
   name: (identifier) @function)
 
 ; Struct declarations
-(struct_decl
+(struct_declaration
   name: (identifier) @type)
 
 ; Enum declarations
-(enum_decl
+(enum_declaration
   name: (identifier) @type)
 
+; Enum variants (Move 2)
+(enum_variant
+  name: (identifier) @constructor)
+
 ; Constant declarations
-(constant_decl
+(constant_declaration
   name: (identifier) @constant)
 
 ; Type references
@@ -40,26 +42,23 @@
 ; Attributes
 (attribute) @attribute
 
-; Field annotations
-(field_annot
-  field: (identifier) @property)
+; Struct field declarations
+(field_declaration
+  name: (identifier) @property)
 
 ; Parameters
-(parameter
-  variable: (identifier) @variable.parameter)
+(function_parameter
+  name: (identifier) @variable.parameter)
 
-; Field access
-(access_field
+; Field access via dot
+(dot_expression
   field: (identifier) @property)
 
-; Control flow expressions
-(break_expr) @keyword.control
-(continue_expr) @keyword.control
-(return_expr) @keyword.control
-(abort_expr) @keyword.control
-
-; Operators
-(binary_operator) @operator
+; Control flow
+(break_expression) @keyword.control
+(continue_expression) @keyword.control
+(return_expression) @keyword.control
+(abort_expression) @keyword.control
 
 ; Built-in functions
 ((identifier) @function.builtin

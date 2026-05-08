@@ -1,20 +1,17 @@
-; Indentation rules for Move
-; Using simple block-based indentation
-
 ; Generic blocks
 (block) @indent
 
 ; Function bodies
-(function_decl
+(function_declaration
   body: (block) @indent)
 
 ; Module body
-(module) @indent
+(module_declaration) @indent
 
 ; If/else expressions
-(if_expr) @indent
+(if_expression) @indent
 
 ; Loop expressions
-(while_expr) @indent
-(loop_expr) @indent
-(for_loop_expr) @indent
+(while_expression) @indent
+(loop_expression) @indent
+(for_expression) @indent
