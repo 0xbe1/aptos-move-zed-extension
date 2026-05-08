@@ -1,7 +1,113 @@
-use zed_extension_api::{self as zed, Result};
+use zed_extension_api::{
+    self as zed,
+    DownloadedFileType, GithubReleaseOptions, LanguageServerInstallationStatus, Result,
+    download_file, latest_github_release, make_file_executable,
+};
 
 struct AptosMoveExtension {
     cached_binary_path: Option<String>,
+}
+
+impl AptosMoveExtension {
+    fn language_server_binary(
+        &mut self,
+        language_server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<String> {
+        // 1. Prefer binary on PATH (user-installed or managed by package manager)
+        if let Some(path) = worktree.which("aptos-language-server") {
+            return Ok(path);
+        }
+
+        // 2. Return cached path if the file still exists from a prior download
+        if let Some(ref path) = self.cached_binary_path {
+            if std::fs::metadata(path).map(|m| m.len() > 0).unwrap_or(false) {
+                return Ok(path.clone());
+            }
+        }
+
+        // 3. Download from GitHub Releases
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &LanguageServerInstallationStatus::CheckingForUpdate,
+        );
+
+        let release = latest_github_release(
+            "aptos-labs/move-vscode-extension",
+            GithubReleaseOptions {
+                require_assets: true,
+                pre_release: false,
+            },
+        )
+        .map_err(|e| format!("Failed to fetch latest release: {e}"))?;
+
+        let (os, arch) = zed::current_platform();
+        let (triple, file_type) = match (os, arch) {
+            (zed::Os::Mac, zed::Architecture::Aarch64) => {
+                ("aarch64-apple-darwin", DownloadedFileType::Gzip)
+            }
+            (zed::Os::Mac, zed::Architecture::X8664) => {
+                ("x86_64-apple-darwin", DownloadedFileType::Gzip)
+            }
+            (zed::Os::Linux, zed::Architecture::X8664) => {
+                ("x86_64-unknown-linux-gnu", DownloadedFileType::Gzip)
+            }
+            (zed::Os::Windows, zed::Architecture::X8664) => {
+                ("x86_64-pc-windows-msvc", DownloadedFileType::Zip)
+            }
+            _ => {
+                return Err(format!(
+                    "Unsupported platform: {os:?} / {arch:?}. Install manually: \
+                     cargo install --git https://github.com/aptos-labs/move-vscode-extension.git \
+                     aptos-language-server"
+                ))
+            }
+        };
+
+        let asset_suffix = match file_type {
+            DownloadedFileType::Zip => ".zip",
+            _ => ".gz",
+        };
+        let asset_name = format!("aptos-language-server-{triple}{asset_suffix}");
+
+        let asset = release
+            .assets
+            .iter()
+            .find(|a| a.name == asset_name)
+            .ok_or_else(|| {
+                format!(
+                    "No release asset found for {asset_name}. \
+                     Install manually: cargo install --git \
+                     https://github.com/aptos-labs/move-vscode-extension.git aptos-language-server"
+                )
+            })?;
+
+        // Binary path includes version so different releases don't collide in the cache
+        let binary_name = format!("aptos-language-server-{}", release.version);
+
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &LanguageServerInstallationStatus::Downloading,
+        );
+
+        download_file(&asset.download_url, &binary_name, file_type).map_err(|e| {
+            format!(
+                "Failed to download aptos-language-server: {e}. \
+                 Install manually: cargo install --git \
+                 https://github.com/aptos-labs/move-vscode-extension.git aptos-language-server"
+            )
+        })?;
+
+        make_file_executable(&binary_name)?;
+
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &LanguageServerInstallationStatus::None,
+        );
+
+        self.cached_binary_path = Some(binary_name.clone());
+        Ok(binary_name)
+    }
 }
 
 impl zed::Extension for AptosMoveExtension {
@@ -13,15 +119,13 @@ impl zed::Extension for AptosMoveExtension {
 
     fn language_server_command(
         &mut self,
-        _language_server_id: &zed::LanguageServerId,
+        language_server_id: &zed::LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<zed::Command> {
-        let server_path = worktree
-            .which("aptos-language-server")
-            .ok_or_else(|| "aptos-language-server not found in PATH. Install: cargo install --git https://github.com/aptos-labs/move-vscode-extension.git aptos-language-server")?;
+        let binary = self.language_server_binary(language_server_id, worktree)?;
 
         Ok(zed::Command {
-            command: server_path,
+            command: binary,
             args: vec!["lsp-server".to_string()],
             env: Default::default(),
         })
