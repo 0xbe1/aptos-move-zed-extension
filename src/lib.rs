@@ -6,6 +6,7 @@ use zed_extension_api::{
 
 struct AptosMoveExtension {
     cached_binary_path: Option<String>,
+    aptos_cli_path: Option<String>,
 }
 
 impl AptosMoveExtension {
@@ -120,6 +121,7 @@ impl zed::Extension for AptosMoveExtension {
     fn new() -> Self {
         Self {
             cached_binary_path: None,
+            aptos_cli_path: None,
         }
     }
 
@@ -130,12 +132,17 @@ impl zed::Extension for AptosMoveExtension {
     ) -> Result<zed::Command> {
         let binary = self.language_server_binary(language_server_id, worktree)?;
 
+        self.aptos_cli_path = worktree.which("aptos");
+
+        // Intentionally no error if aptos is absent — killing the LSP would remove all language
+        // features. The aptosCliAvailable init option signals the server to skip code lenses
+        // that require the CLI (B3 test runner, B5 prover).
+
         // Pass aptos CLI path so server can spawn it for tests and prover (Track B).
         // Server gracefully ignores this env var until B3/B5 land.
-        let aptos_env = worktree
-            .which("aptos")
-            .map(|p| ("APTOS_CLI_PATH".to_string(), p))
-            .into_iter()
+        let aptos_env = self.aptos_cli_path
+            .iter()
+            .map(|p| ("APTOS_CLI_PATH".to_string(), p.clone()))
             .collect();
 
         Ok(zed::Command {
@@ -148,9 +155,9 @@ impl zed::Extension for AptosMoveExtension {
     fn language_server_initialization_options(
         &mut self,
         _language_server_id: &zed::LanguageServerId,
-        worktree: &zed::Worktree,
+        _worktree: &zed::Worktree,
     ) -> Result<Option<serde_json::Value>> {
-        let aptos_available = worktree.which("aptos").is_some();
+        let aptos_available = self.aptos_cli_path.is_some();
 
         let options = serde_json::json!({
             "inlayHints": {
