@@ -1,17 +1,14 @@
-; Generic blocks
-(block) @indent
+; Block delimiters — covers function bodies, module bodies, if/while/loop/for
+(_
+  "{"
+  "}" @end) @indent
 
-; Function bodies
-(function_declaration
-  body: (block) @indent)
+; Parenthesized expressions and parameter lists
+(_
+  "("
+  ")" @end) @indent
 
-; Module body
-(module_declaration) @indent
-
-; If/else expressions
-(if_expression) @indent
-
-; Loop expressions
-(while_expression) @indent
-(loop_expression) @indent
-(for_expression) @indent
+; Generic type parameters
+(_
+  "<"
+  ">" @end) @indent
