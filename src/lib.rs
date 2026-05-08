@@ -98,7 +98,13 @@ impl AptosMoveExtension {
             )
         })?;
 
-        make_file_executable(&binary_name)?;
+        make_file_executable(&binary_name).map_err(|e| {
+            format!(
+                "Failed to make aptos-language-server executable: {e}. \
+                 Install manually: cargo install --git \
+                 https://github.com/aptos-labs/move-vscode-extension.git aptos-language-server"
+            )
+        })?;
 
         zed::set_language_server_installation_status(
             language_server_id,
