@@ -130,11 +130,44 @@ impl zed::Extension for AptosMoveExtension {
     ) -> Result<zed::Command> {
         let binary = self.language_server_binary(language_server_id, worktree)?;
 
+        // Pass aptos CLI path so server can spawn it for tests and prover (Track B).
+        // Server gracefully ignores this env var until B3/B5 land.
+        let aptos_env = worktree
+            .which("aptos")
+            .map(|p| ("APTOS_CLI_PATH".to_string(), p))
+            .into_iter()
+            .collect();
+
         Ok(zed::Command {
             command: binary,
             args: vec!["lsp-server".to_string()],
-            env: Default::default(),
+            env: aptos_env,
         })
+    }
+
+    fn language_server_initialization_options(
+        &mut self,
+        _language_server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<Option<serde_json::Value>> {
+        let aptos_available = worktree.which("aptos").is_some();
+
+        let options = serde_json::json!({
+            "inlayHints": {
+                "typeHints": { "enable": true },
+                "parameterHints": { "enable": true }
+            },
+            "diagnostics": {
+                "disabled": []
+            },
+            "movefmt": {
+                "path": null,
+                "extraArgs": []
+            },
+            "aptosCliAvailable": aptos_available
+        });
+
+        Ok(Some(options))
     }
 }
 
