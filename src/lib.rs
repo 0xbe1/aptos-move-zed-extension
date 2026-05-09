@@ -1,7 +1,6 @@
 use zed_extension_api::{
-    self as zed,
-    DownloadedFileType, GithubReleaseOptions, LanguageServerInstallationStatus, Result,
-    download_file, latest_github_release, make_file_executable,
+    self as zed, download_file, latest_github_release, make_file_executable, DownloadedFileType,
+    GithubReleaseOptions, LanguageServerInstallationStatus, Result,
 };
 
 struct AptosMoveExtension {
@@ -22,7 +21,10 @@ impl AptosMoveExtension {
 
         // 2. Return cached path if the file still exists from a prior download
         if let Some(ref path) = self.cached_binary_path {
-            if std::fs::metadata(path).map(|m| m.len() > 0).unwrap_or(false) {
+            if std::fs::metadata(path)
+                .map(|m| m.len() > 0)
+                .unwrap_or(false)
+            {
                 return Ok(path.clone());
             }
         }
@@ -140,7 +142,8 @@ impl zed::Extension for AptosMoveExtension {
 
         // Pass aptos CLI path so server can spawn it for tests and prover (Track B).
         // Server gracefully ignores this env var until B3/B5 land.
-        let aptos_env = self.aptos_cli_path
+        let aptos_env = self
+            .aptos_cli_path
             .iter()
             .map(|p| ("APTOS_CLI_PATH".to_string(), p.clone()))
             .collect();
