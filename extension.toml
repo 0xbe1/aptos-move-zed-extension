@@ -14,3 +14,7 @@ languages = ["Move", "Move.toml"]
 [grammars.move_on_aptos]
 repository = "https://github.com/aptos-labs/tree-sitter-move-on-aptos"
 rev = "12906b341de7cef81cf03d7d91dae51d8a9299e7"
+
+[grammars.toml]
+repository = "https://github.com/tree-sitter-grammars/tree-sitter-toml"
+rev = "64b56832c2cffe41758f28e05c756a3a98d16f41"
