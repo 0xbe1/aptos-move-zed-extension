@@ -1,69 +1,260 @@
-; Syntax highlighting for Aptos Move
-; Minimal version using only validated node types
-
 ; Comments
 (line_comment) @comment
 (block_comment) @comment
 
-; Literals
+; ─── Literals ───────────────────────────────────────────────────────────────
 (bool_literal) @boolean
-(number) @number
-(byte_string) @string
-(numerical_addr) @constant.builtin
+(num_literal) @number
+(byte_string_literal) @string
+(hex_string_literal) @string
+(numerical_address) @constant.builtin
 
-; Module declarations
-(module
+; ─── Keywords ───────────────────────────────────────────────────────────────
+; Declaration keywords
+[
+  "module"
+  "script"
+  "address"
+  "fun"
+  "struct"
+  "enum"
+  "const"
+  "use"
+  "friend"
+  "spec"
+  "schema"
+] @keyword
+
+; Modifier keywords (anonymous tokens)
+[
+  "public"
+  "native"
+  "package"
+  "phantom"
+  "has"
+] @keyword.modifier
+
+; Modifiers wrapped in named nodes
+(entry_modifier) @keyword.modifier
+(inline_modifier) @keyword.modifier
+
+; Storage abilities (the words copy/drop/store/key when used as abilities)
+[
+  "key"
+  "store"
+  "drop"
+] @type.builtin
+
+; Variable bindings
+[
+  "let"
+] @keyword
+
+; Control flow
+[
+  "if"
+  "else"
+  "match"
+  "while"
+  "loop"
+  "for"
+  "return"
+  "break"
+  "continue"
+  "abort"
+  "in"
+] @keyword.control
+
+; Move-specific expression keywords
+[
+  "move"
+  "copy"
+  "as"
+  "is"
+  "acquires"
+  "where"
+  "to"
+] @keyword
+
+; Spec keywords
+[
+  "invariant"
+  "ensures"
+  "requires"
+  "aborts_if"
+  "aborts_with"
+  "modifies"
+  "emits"
+  "decreases"
+  "succeeds_if"
+  "assume"
+  "assert"
+  "axiom"
+  "include"
+  "apply"
+  "pragma"
+  "global"
+  "local"
+  "post"
+  "forall"
+  "exists"
+  "choose"
+  "min"
+  "with"
+  "except"
+  "internal"
+  "update"
+] @keyword
+
+; Boolean literal keywords
+[
+  "true"
+  "false"
+] @boolean
+
+; ─── Operators ──────────────────────────────────────────────────────────────
+[
+  "+"
+  "-"
+  "*"
+  "/"
+  "%"
+  "=="
+  "!="
+  "<"
+  ">"
+  "<="
+  ">="
+  "&&"
+  "||"
+  "!"
+  "&"
+  "|"
+  "^"
+  "<<"
+  ">>"
+  "="
+  "=>"
+  ".."
+  "::"
+] @operator
+
+; ─── Punctuation ────────────────────────────────────────────────────────────
+[
+  "("
+  ")"
+  "["
+  "]"
+  "{"
+  "}"
+] @punctuation.bracket
+
+[
+  ","
+  ";"
+  ":"
+  "."
+] @punctuation.delimiter
+
+; ─── Module / namespace declarations ────────────────────────────────────────
+(module_declaration
   name: (identifier) @namespace)
 
-; Function declarations
-(function_decl
+; Address blocks
+(address_block) @namespace
+
+; ─── Use declarations ───────────────────────────────────────────────────────
+(use_module
+  (module_identity) @namespace)
+(use_member
+  member: (identifier) @variable)
+(use_alias
+  alias: (identifier) @variable)
+
+; Friend declarations target a module
+(friend_declaration
+  (name_access_chain) @namespace)
+
+; ─── Function declarations ──────────────────────────────────────────────────
+(function_declaration
   name: (identifier) @function)
 
-; Struct declarations
-(struct_decl
+; ─── Function calls ─────────────────────────────────────────────────────────
+; Highlight the whole call target chain; specific patterns above (e.g. namespace
+; portions inside name_access_chain) can refine this further.
+(call_expression
+  function: (name_access_chain
+    (identifier) @function.call))
+
+(macro_call_expression
+  macro: (macro_identifier) @function.macro)
+
+; ─── Built-in functions ─────────────────────────────────────────────────────
+((identifier) @function.builtin
+  (#match? @function.builtin "^(assert|move_to|move_from|borrow_global|borrow_global_mut|exists|freeze)$"))
+
+; ─── Struct / Enum declarations ─────────────────────────────────────────────
+(struct_declaration
   name: (identifier) @type)
 
-; Enum declarations
-(enum_decl
+(enum_declaration
   name: (identifier) @type)
 
-; Constant declarations
-(constant_decl
-  name: (identifier) @constant)
+; Enum variants — name highlighted as constructor
+(enum_variant
+  name: (identifier) @constructor)
 
-; Type references
+; ─── Type references ────────────────────────────────────────────────────────
+(apply_type
+  (name_access_chain
+    (identifier) @type))
+
 (primitive_type) @type.builtin
 
-; Abilities
-(ability) @attribute
+; Type parameter declarations: <T, U: copy + drop>
+(type_parameter
+  name: (identifier) @type.parameter)
 
-; Attributes
+; ─── Constants ──────────────────────────────────────────────────────────────
+(constant_declaration
+  name: (identifier) @constant)
+
+; ─── Abilities ──────────────────────────────────────────────────────────────
+(ability) @type.builtin
+
+; ─── Attributes (#[test], #[expected_failure], etc.) ────────────────────────
+(attributes) @attribute
 (attribute) @attribute
 
-; Field annotations
-(field_annot
+; ─── Struct fields ──────────────────────────────────────────────────────────
+(field_declaration
+  name: (identifier) @property)
+
+(field_initializer
   field: (identifier) @property)
 
-; Parameters
-(parameter
-  variable: (identifier) @variable.parameter)
-
-; Field access
-(access_field
+(field_pattern
   field: (identifier) @property)
 
-; Control flow expressions
-(break_expr) @keyword.control
-(continue_expr) @keyword.control
-(return_expr) @keyword.control
-(abort_expr) @keyword.control
+; Field access: x.field
+(dot_expression
+  field: (identifier) @property)
 
-; Operators
-(binary_operator) @operator
+; ─── Function parameters / lambdas ──────────────────────────────────────────
+(function_parameter
+  name: (identifier) @variable.parameter)
 
-; Built-in functions
-((identifier) @function.builtin
-  (#match? @function.builtin "^(assert|move_to|move_from|borrow_global|borrow_global_mut|exists|freeze|vector)$"))
+(lambda_parameter
+  (bind_var
+    (identifier) @variable.parameter))
 
-; All other identifiers
+; ─── Variable bindings ──────────────────────────────────────────────────────
+(bind_var
+  (identifier) @variable)
+
+; Self parameter in receiver functions
+((identifier) @variable.special
+  (#eq? @variable.special "self"))
+
+; ─── Catch-all: any other identifier is a variable reference ────────────────
 (identifier) @variable

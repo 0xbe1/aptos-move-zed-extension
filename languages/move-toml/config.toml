@@ -1,0 +1,4 @@
+name = "Move.toml"
+grammar = "toml"
+path_suffixes = ["Move.toml"]
+line_comments = ["# "]
