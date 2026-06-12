@@ -18,4 +18,7 @@ clippy:
 clean:
     cargo clean
 
-ci: fmt-check clippy build
+ci:
+    cargo fmt --check
+    cargo clippy --locked --target wasm32-wasip2 -- -D warnings
+    cargo build --locked --target wasm32-wasip2 --release
