@@ -9,6 +9,10 @@ Language support for Aptos Move in the Zed editor, including syntax highlighting
 - Auto-completion, go-to-definition, and diagnostics
 - Bracket matching and auto-indentation
 - Support for Move-specific syntax (modules, structs, functions, specs, etc.)
+- Full `Move.toml` support: syntax highlighting for TOML plus Move-specific
+  sections (`package`, `dependencies`, `dev-dependencies`, `addresses`,
+  `dev-addresses`), bracket matching, auto-indentation, and outline, cursor
+  navigation, and LSP completions
 
 ## Installation
 

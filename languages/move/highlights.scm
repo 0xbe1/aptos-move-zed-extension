@@ -236,6 +236,14 @@
 (field_pattern
   field: (identifier) @property)
 
+; Receiver-style method call: x.method(...) — the callee is a function, not a
+; field. Uses the same @function.call family as free-function calls above so
+; call sites style uniformly across themes. Must precede the plain
+; field-access rule below so calls are painted as functions, not properties.
+(dot_expression
+  field: (identifier) @function.call
+  arguments: (arg_list))
+
 ; Field access: x.field
 (dot_expression
   field: (identifier) @property)

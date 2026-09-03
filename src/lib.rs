@@ -1,6 +1,6 @@
 use zed_extension_api::{
-    self as zed, download_file, latest_github_release, make_file_executable, DownloadedFileType,
-    GithubReleaseOptions, LanguageServerInstallationStatus, Result,
+    self as zed, DownloadedFileType, GithubReleaseOptions, LanguageServerInstallationStatus,
+    Result, download_file, latest_github_release, make_file_executable,
 };
 
 struct AptosMoveExtension {
@@ -20,13 +20,12 @@ impl AptosMoveExtension {
         }
 
         // 2. Return cached path if the file still exists from a prior download
-        if let Some(ref path) = self.cached_binary_path {
-            if std::fs::metadata(path)
+        if let Some(ref path) = self.cached_binary_path
+            && std::fs::metadata(path)
                 .map(|m| m.len() > 0)
                 .unwrap_or(false)
-            {
-                return Ok(path.clone());
-            }
+        {
+            return Ok(path.clone());
         }
 
         // 3. Download from GitHub Releases
@@ -63,7 +62,7 @@ impl AptosMoveExtension {
                     "Unsupported platform: {os:?} / {arch:?}. Install manually: \
                      cargo install --git https://github.com/aptos-labs/move-vscode-extension.git \
                      aptos-language-server"
-                ))
+                ));
             }
         };
 
