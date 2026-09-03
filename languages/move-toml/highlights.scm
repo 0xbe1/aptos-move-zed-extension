@@ -70,8 +70,9 @@
 
 ; Known dependency keys inside inline tables, e.g.
 ; Foo = { git = "...", rev = "...", subdir = "...", local = "...", addr = "..." }
-((pair
-  (bare_key) @variable.other.member)
+((inline_table
+  (pair
+    (bare_key) @variable.other.member))
  (#match? @variable.other.member "^(git|rev|subdir|local|addr)$"))
 
 ; Named address values (hex addresses) get constant.builtin, e.g.

@@ -14,12 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Toolchain, targets, and components all come from rust-toolchain.toml
+      # (single source of truth). The runner's preinstalled rustup reads that
+      # file and auto-installs what it needs — no third-party action pinned to
+      # a moving branch.
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.96.0"
-          targets: wasm32-wasip2
-          components: rustfmt, clippy
+        run: rustup show
 
       - name: Cache cargo registry
         uses: actions/cache@v4
