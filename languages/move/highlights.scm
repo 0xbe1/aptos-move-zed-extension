@@ -236,6 +236,13 @@
 (field_pattern
   field: (identifier) @property)
 
+; Receiver-style method call: x.method(...) — the callee is a function, not a
+; field. Must precede the plain field-access rule below so calls are painted
+; as functions rather than properties.
+(dot_expression
+  field: (identifier) @function.method
+  arguments: (arg_list))
+
 ; Field access: x.field
 (dot_expression
   field: (identifier) @property)
