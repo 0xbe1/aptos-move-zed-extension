@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Toolchain, targets, and components all come from rust-toolchain.toml
       # (single source of truth). The runner's preinstalled rustup reads that
@@ -22,7 +22,7 @@ jobs:
         run: rustup show
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
