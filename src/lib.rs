@@ -22,7 +22,7 @@ impl AptosMoveExtension {
         // 2. Return cached path if the file still exists from a prior download
         if let Some(ref path) = self.cached_binary_path
             && std::fs::metadata(path)
-                .map(|m| m.len() > 0)
+                .map(|m| m.is_file())
                 .unwrap_or(false)
         {
             return Ok(path.clone());
@@ -84,15 +84,22 @@ impl AptosMoveExtension {
                 )
             })?;
 
-        // Binary path includes version so different releases don't collide in the cache
-        let binary_name = format!("aptos-language-server-{}", release.version);
+        // Download destination includes the version so different releases don't
+        // collide in the cache. A .gz asset decompresses to the binary itself; a
+        // .zip asset (Windows) extracts into a directory of this name, with the
+        // executable inside it.
+        let download_name = format!("aptos-language-server-{}", release.version);
+        let binary_path = match file_type {
+            DownloadedFileType::Zip => format!("{download_name}/aptos-language-server.exe"),
+            _ => download_name.clone(),
+        };
 
         zed::set_language_server_installation_status(
             language_server_id,
             &LanguageServerInstallationStatus::Downloading,
         );
 
-        download_file(&asset.download_url, &binary_name, file_type).map_err(|e| {
+        download_file(&asset.download_url, &download_name, file_type).map_err(|e| {
             format!(
                 "Failed to download aptos-language-server: {e}. \
                  Install manually: cargo install --git \
@@ -100,7 +107,7 @@ impl AptosMoveExtension {
             )
         })?;
 
-        make_file_executable(&binary_name).map_err(|e| {
+        make_file_executable(&binary_path).map_err(|e| {
             format!(
                 "Failed to make aptos-language-server executable: {e}. \
                  Install manually: cargo install --git \
@@ -113,8 +120,8 @@ impl AptosMoveExtension {
             &LanguageServerInstallationStatus::None,
         );
 
-        self.cached_binary_path = Some(binary_name.clone());
-        Ok(binary_name)
+        self.cached_binary_path = Some(binary_path.clone());
+        Ok(binary_path)
     }
 }
 

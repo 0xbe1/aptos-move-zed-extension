@@ -99,25 +99,36 @@ When you first open a Move project, you'll see a banner asking to trust the fold
 
 ```
 aptos-move-zed-extension/
-├── extension.toml           # Extension metadata
+├── extension.toml           # Extension metadata (grammars pinned by rev)
 ├── Cargo.toml              # Rust dependencies
+├── Justfile                # Task runner recipes (build, clippy, test, ci)
 ├── src/
 │   └── lib.rs              # LSP integration code
-└── languages/
-    └── move/
-        ├── config.toml      # Language configuration
-        ├── highlights.scm   # Syntax highlighting rules
-        ├── brackets.scm     # Bracket matching
-        └── indents.scm      # Auto-indentation rules
+├── languages/
+│   ├── move/               # Move language (.move files)
+│   │   ├── config.toml     # Language configuration
+│   │   ├── highlights.scm  # Syntax highlighting rules
+│   │   ├── brackets.scm    # Bracket matching
+│   │   └── indents.scm     # Auto-indentation rules
+│   └── move-toml/          # Move.toml manifests (TOML grammar + Move rules)
+│       ├── config.toml
+│       ├── highlights.scm
+│       └── ...             # brackets, indents, folds, outline, injections, etc.
+├── scripts/
+│   └── validate-queries.sh # Checks queries & fixtures against pinned grammars
+└── test-fixtures/          # Move package used for manual & automated testing
+    ├── Move.toml
+    └── sources/            # .move fixtures exercising the grammar's features
 ```
 
 ## Development
 
 ### Prerequisites
 
-- Rust toolchain (1.82+)
-- `wasm32-wasip2` target: `rustup target add wasm32-wasip2`
+- Rust toolchain — pinned via `rust-toolchain.toml` (currently 1.96.0 with
+  `wasm32-wasip2`, rustfmt, and clippy; rustup installs it automatically)
 - Zed editor
+- Optional, for query validation: `npm install -g tree-sitter-cli`
 
 ### Building
 
@@ -128,7 +139,17 @@ cp target/wasm32-wasip2/release/aptos_move_zed_extension.wasm extension.wasm
 
 ### Testing
 
-Open a Move project in Zed with the extension linked to test changes.
+Automated checks (all run in CI; `just ci` runs everything locally):
+
+- `just fmt-check` — formatting
+- `just clippy` — lints (warnings are errors)
+- `just test` — Rust unit tests
+- `just test-queries` — validates every `languages/**/*.scm` query against the
+  grammars pinned in `extension.toml` and checks that all `test-fixtures/`
+  files parse without errors (requires the tree-sitter CLI)
+
+For manual end-to-end testing, open a Move project (e.g. `test-fixtures/`) in
+Zed with the extension linked.
 
 ## Contributing
 

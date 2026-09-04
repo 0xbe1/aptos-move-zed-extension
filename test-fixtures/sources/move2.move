@@ -1,5 +1,9 @@
-/// Move 2 features — exercises enum highlighting, receiver functions,
-/// and enum variant constructors.
+/// Move 2 features — exercises enum highlighting, receiver-style method
+/// calls, and enum variant constructors.
+///
+/// Note: Move has no receiver-style *declaration* syntax — the receiver is
+/// just the first parameter (conventionally named `self`). Receiver style
+/// exists at call sites only: `x.area()` desugars to `area(&x)`.
 module test_addr::move2 {
     use std::string::String;
 
@@ -22,8 +26,9 @@ module test_addr::move2 {
         Err(String),
     }
 
-    // Receiver function syntax: (self: &Shape).method()
-    public fun (self: &Shape).area(): u64 {
+    // Receiver-callable functions: the first parameter is the receiver,
+    // enabling `shape.area()` at call sites (see tests below).
+    public fun area(self: &Shape): u64 {
         match (self) {
             Shape::Circle { radius } => {
                 // pi * r^2, approximated as 3 * r^2 for integer math
@@ -34,7 +39,7 @@ module test_addr::move2 {
         }
     }
 
-    public fun (self: &Shape).perimeter(): u64 {
+    public fun perimeter(self: &Shape): u64 {
         match (self) {
             Shape::Circle { radius } => 6 * radius,
             Shape::Rectangle { width, height } => 2 * (width + height),
@@ -42,7 +47,7 @@ module test_addr::move2 {
         }
     }
 
-    public fun (self: &Color).to_hex(): u32 {
+    public fun to_hex(self: &Color): u32 {
         match (self) {
             Color::Red    => 0xFF0000,
             Color::Green  => 0x00FF00,

@@ -37,5 +37,26 @@ jobs:
       - name: Clippy
         run: cargo clippy --locked --target wasm32-wasip2 -- -D warnings
 
+      # Tests run on the native target: the extension compiles to a cdylib for
+      # the wasm32-wasip2 host, but unit tests execute on the runner itself.
+      - name: Test
+        run: cargo test --locked
+
       - name: Build WASM
         run: cargo build --locked --target wasm32-wasip2 --release
+
+  # Validates the language queries and fixtures against the grammars pinned in
+  # extension.toml. Independent of the Rust job: needs Node (for the
+  # tree-sitter CLI) but no Rust toolchain.
+  queries:
+    name: Validate Queries & Fixtures
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install tree-sitter CLI
+        run: npm install --global tree-sitter-cli@0.27
+
+      - name: Validate queries and fixtures
+        run: ./scripts/validate-queries.sh
