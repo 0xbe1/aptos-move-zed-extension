@@ -11,6 +11,18 @@ license = "MIT"
 name = "Aptos Move Language Server"
 languages = ["Move", "Move.toml"]
 
+# Move test debugging (`aptos-dap test`): debug #[test] functions in a Move
+# package. Config fields: testFilter, packagePath, extraArgs, env.
+[debug_adapters.aptos-move-test]
+name = "Aptos Move Test"
+languages = ["Move"]
+
+# Transaction replay (`aptos-dap replay`): step through an executed on-chain
+# transaction. Config fields: txnId, network, useLocalPackages, namedAddresses.
+[debug_adapters.aptos-move-replay]
+name = "Aptos Move Replay"
+languages = ["Move"]
+
 [grammars.move_on_aptos]
 repository = "https://github.com/aptos-labs/tree-sitter-move-on-aptos"
 rev = "12906b341de7cef81cf03d7d91dae51d8a9299e7"
