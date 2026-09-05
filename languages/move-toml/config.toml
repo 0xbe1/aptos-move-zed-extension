@@ -1,11 +1,11 @@
 name = "Move.toml"
 grammar = "toml"
-; path_suffixes is pure suffix matching: this matches files named exactly
-; "Move.toml" as well as dotted variants like "old.Move.toml" (whose path ends
-; with ".Move.toml"), but not names without a dot boundary such as
-; "myMove.toml". Exact-filename-only matching is not expressible here. Zed
-; scores suffix matches by length, so this still wins over the generic TOML
-; language's "toml" suffix for any file it matches.
+# path_suffixes is pure suffix matching: this matches files named exactly
+# "Move.toml" as well as dotted variants like "old.Move.toml" (whose path ends
+# with ".Move.toml"), but not names without a dot boundary such as
+# "myMove.toml". Exact-filename-only matching is not expressible here. Zed
+# scores suffix matches by length, so this still wins over the generic TOML
+# language's "toml" suffix for any file it matches.
 path_suffixes = ["Move.toml"]
 line_comments = ["# "]
 autoclose_before = ",]}"

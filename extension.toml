@@ -15,11 +15,11 @@ languages = ["Move", "Move.toml"]
 repository = "https://github.com/aptos-labs/tree-sitter-move-on-aptos"
 rev = "12906b341de7cef81cf03d7d91dae51d8a9299e7"
 
-; Bundled so the Move.toml language parses even when the standalone TOML
-; extension is not installed. Grammar names live in a global registry keyed
-; by name, so if both extensions are installed Zed keeps whichever registers
-; first. Keep this rev in sync with zed-extensions/toml so the two can't
-; silently drift apart.
+# Bundled so the Move.toml language parses even when the standalone TOML
+# extension is not installed. Grammar names live in a global registry keyed
+# by name, so if both extensions are installed Zed keeps whichever registers
+# first. Keep this rev in sync with zed-extensions/toml so the two can't
+# silently drift apart.
 [grammars.toml]
 repository = "https://github.com/tree-sitter-grammars/tree-sitter-toml"
 rev = "64b56832c2cffe41758f28e05c756a3a98d16f41"
