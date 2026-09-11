@@ -9,6 +9,10 @@ Language support for Aptos Move in the Zed editor, including syntax highlighting
 - Auto-completion, go-to-definition, and diagnostics
 - Bracket matching and auto-indentation
 - Support for Move-specific syntax (modules, structs, functions, specs, etc.)
+- Unit test, coverage, and Move Prover workflows via ▶ run indicators and Zed tasks
+- Debugging with `aptos-dap`: step through `#[test]` functions or replay on-chain transactions
+- Formatting via `movefmt` (format-on-save ready, binary resolved automatically)
+- Linting: inline language-server diagnostics plus `aptos move lint` tasks
 - Full `Move.toml` support: syntax highlighting for TOML plus Move-specific
   sections (`package`, `dependencies`, `dev-dependencies`, `addresses`,
   `dev-addresses`), bracket matching, auto-indentation, and outline, cursor
@@ -95,25 +99,156 @@ Open any `.move` file in Zed and the extension will automatically activate, prov
 
 When you first open a Move project, you'll see a banner asking to trust the folder. Click **"Trust"** to enable LSP features (go-to-definition, hover, diagnostics, etc.).
 
+## Tests, Coverage & the Move Prover
+
+The extension shows ▶ run indicators next to `#[test]` functions and module
+declarations. Clicking an indicator runs the Zed task bound to its tag.
+
+### One-time setup: install the task bindings
+
+Zed resolves run indicators through task templates, which live in your project
+(`.zed/tasks.json`) or globally (`~/.config/zed/tasks.json`). Copy — or merge —
+[`templates/tasks.json`](templates/tasks.json) into one of those locations:
+
+```bash
+mkdir -p .zed && cp templates/tasks.json .zed/tasks.json   # per project
+```
+
+The templates bind:
+
+| Tag | Indicator | Runs |
+|---|---|---|
+| `move-test` | ▶ on `#[test]` functions | `aptos move test --filter <fn>` |
+| `move-prove` | ▶ on module declarations | `aptos move prove --filter <module>` |
+
+and add task-modal entries (open with `task: spawn`) for the rest of the
+workflow: test all / test at cursor, prove package / function at cursor,
+`test --coverage`, `coverage summary | source | bytecode`, `move lint`
+(default / strict / list checks), and compile-with-warnings.
+
+### Coverage
+
+1. Run **move test: with coverage** — runs the suite instrumented (`aptos move test --coverage`)
+2. Run **move coverage: summary** or **move coverage: source** — reads the trace
+   produced by step 1
+
+### Move Prover
+
+The `move prove: ...` tasks wrap `aptos move prove` (`--filter <module>`,
+`--only <fn>`). The prover needs its own toolchain (Z3, Boogie) on `PATH`; see
+the [Move Prover docs](https://github.com/aptos-labs/aptos-core/tree/main/aptos-move/prover).
+
+> **Why tasks instead of code lenses?** The VS Code extension's clickable
+> "Run Test" lenses work because its client code spawns the `aptos` CLI — the
+> language server itself never runs tests, and Zed has no handler for the
+> `move-on-aptos.runTest` commands. Zed tasks are the native equivalent, with
+> full terminal output. Requires the [`aptos` CLI](https://aptos.dev/tools/install-cli/) on `PATH`.
+
+## Debugging
+
+Two debug adapters built on
+[`aptos-dap`](https://github.com/aptos-labs/aptos-debugger), downloaded
+automatically on first use (prebuilt binaries exist for macOS arm64/x64 and
+Linux x64; on other platforms build it from source and put `aptos-dap` on your
+`PATH`):
+
+- **Aptos Move Test** — debug a package's `#[test]` functions
+- **Aptos Move Replay** — replay and step through an executed on-chain transaction
+
+Add a `.zed/debug.json` to your project:
+
+```json
+[
+  {
+    "label": "Debug this package's tests",
+    "adapter": "Aptos Move Test",
+    "request": "launch",
+    "packagePath": "$ZED_WORKTREE_ROOT",
+    "testFilter": "test_"
+  },
+  {
+    "label": "Replay a mainnet transaction",
+    "adapter": "Aptos Move Replay",
+    "request": "launch",
+    "network": "mainnet",
+    "txnId": "0x123...",
+    "useLocalPackages": ["$ZED_WORKTREE_ROOT"]
+  }
+]
+```
+
+Supported fields (names match the VS Code extension's launch schema):
+`testFilter`, `packagePath`, `network`, `txnId`, `useLocalPackages`,
+`namedAddresses`, `extraArgs`, `env`. Set breakpoints in `.move` files and
+start the session from Zed's debugger.
+
+## Formatting
+
+Formatting is provided by [movefmt](https://github.com/aptos-labs/movefmt)
+(≥ 1.2.1), which the language server shells out to for `editor: format` and
+format-on-save:
+
+```json
+// settings.json
+"languages": {
+  "Move": { "format_on_save": "on" }
+}
+```
+
+The extension resolves the binary in this order: `movefmt` on `PATH` → a copy
+downloaded automatically from the
+[aptos-labs/movefmt releases](https://github.com/aptos-labs/movefmt/releases)
+(prebuilts for macOS arm64/x64, Linux arm64/x64, and Windows x64). To manage
+it yourself instead:
+
+```bash
+aptos update movefmt        # installs the pinned version to ~/.local/bin
+```
+
+movefmt reads a `movefmt.toml` next to your `Move.toml` (`max_width`,
+`tab_spaces`, …) — see the
+[movefmt usage docs](https://github.com/movebit/movefmt/blob/develop/doc/how_to_use.md).
+
+> The VS Code extension prompts to run `aptos update movefmt` via a custom
+> notification when the binary is missing or too old; Zed doesn't surface that
+> notification, which is why this extension resolves and downloads movefmt
+> itself.
+
+## Linting
+
+Two layers:
+
+- **Inline diagnostics** come from the language server as you edit — unused
+  imports/variables, redundant casts, "can be replaced with method call"
+  suggestions, missing doc comments on error constants, and more, several with
+  quickfixes (⌘.). They are on by default; `missing-const-doc-comment` is
+  disabled upstream by default.
+- **Package-level lint tasks** wrap `aptos move lint` (Move 2 compiler lints
+  on top of ordinary warnings): **move lint: package** (default tier),
+  **move lint: strict**, and **move lint: list checks**, which prints every
+  check grouped by tier (`default` / `strict` / `experimental` / `all`) for
+  use with `--checks`. Also included: **move check: compile (warnings fail)**.
+
 ## Project Structure
 
 ```
 aptos-move-zed-extension/
-├── extension.toml           # Extension metadata (grammars pinned by rev)
+├── extension.toml           # Extension metadata (grammars pinned by rev; LSP + debug adapters)
 ├── Cargo.toml              # Rust dependencies
 ├── Justfile                # Task runner recipes (build, clippy, test, ci)
 ├── src/
-│   └── lib.rs              # LSP integration code
+│   └── lib.rs              # LSP + debug adapter integration code
 ├── languages/
 │   ├── move/               # Move language (.move files)
 │   │   ├── config.toml     # Language configuration
 │   │   ├── highlights.scm  # Syntax highlighting rules
+│   │   ├── runnables.scm   # ▶ run indicators (test, prove)
+│   │   ├── outline.scm     # Outline / breadcrumbs
 │   │   ├── brackets.scm    # Bracket matching
 │   │   └── indents.scm     # Auto-indentation rules
-│   └── move-toml/          # Move.toml manifests (TOML grammar + Move rules)
-│       ├── config.toml
-│       ├── highlights.scm
-│       └── ...             # brackets, indents, folds, outline, injections, etc.
+│   └── move-toml/          # Move.toml support
+├── templates/
+│   └── tasks.json           # Task bindings for test / coverage / prover / fmt / lint
 ├── scripts/
 │   └── validate-queries.sh # Checks queries & fixtures against pinned grammars
 └── test-fixtures/          # Move package used for manual & automated testing

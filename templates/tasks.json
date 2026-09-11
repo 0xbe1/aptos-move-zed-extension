@@ -1,0 +1,70 @@
+[
+  {
+    // Bound to the ▶ indicator on #[test] functions (runnables.scm tag `move-test`)
+    "label": "move test: $ZED_CUSTOM_TEST",
+    "command": "aptos move test --filter $ZED_CUSTOM_TEST",
+    "tags": ["move-test"],
+    // Reuse the task terminal; a rerun replaces the previous run
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    // Runs the test function under the cursor (works via outline.scm)
+    "label": "move test: function at cursor ($ZED_SYMBOL)",
+    "command": "aptos move test --filter $ZED_SYMBOL"
+  },
+  {
+    "label": "move test: all",
+    "command": "aptos move test"
+  },
+  {
+    // Bound to the ▶ indicator on module declarations (runnables.scm tag `move-prove`)
+    "label": "move prove: module $ZED_CUSTOM_MODULE",
+    "command": "aptos move prove --filter $ZED_CUSTOM_MODULE",
+    "tags": ["move-prove"]
+  },
+  {
+    "label": "move prove: function at cursor ($ZED_SYMBOL)",
+    "command": "aptos move prove --only $ZED_SYMBOL"
+  },
+  {
+    "label": "move prove: package",
+    "command": "aptos move prove"
+  },
+  {
+    // Instruments the test run; the results feed the `move coverage ...` tasks
+    "label": "move test: with coverage",
+    "command": "aptos move test --coverage"
+  },
+  {
+    "label": "move coverage: summary",
+    "command": "aptos move coverage summary"
+  },
+  {
+    // Module name defaults to the current file's stem (Move convention: one
+    // module per file named after the module)
+    "label": "move coverage: source ($ZED_STEM)",
+    "command": "aptos move coverage source --module $ZED_STEM --color always --tag"
+  },
+  {
+    "label": "move coverage: bytecode ($ZED_STEM)",
+    "command": "aptos move coverage bytecode --module $ZED_STEM"
+  },
+  {
+    // Move 2 compiler lints beyond ordinary warnings
+    "label": "move lint: package",
+    "command": "aptos move lint"
+  },
+  {
+    "label": "move lint: strict",
+    "command": "aptos move lint --checks strict"
+  },
+  {
+    "label": "move lint: list checks",
+    "command": "aptos move lint --list-checks"
+  },
+  {
+    "label": "move check: compile (warnings fail)",
+    "command": "aptos move compile --fail-on-warning"
+  }
+]
